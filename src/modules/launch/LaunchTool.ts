@@ -43,7 +43,7 @@ export function launchProfile(
     isolated?: boolean;
   }
 ): string {
-  const vmArgs = generateVMArgs(profile, container);
+  const vmArgs = generateVMArgs(profile, container, !!policies.isolated);
   const gameArgs = generateGameArgs(
     profile,
     container,

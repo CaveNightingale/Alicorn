@@ -51,27 +51,29 @@ export function generateGameArgs(
 // Generate vm arguments, not for GCs or anything else
 export function generateVMArgs(
   profile: GameProfile,
-  container: MinecraftContainer
+  container: MinecraftContainer,
+  isolated: boolean
 ): string[] {
+  const root = isolated ? container.getVersionRoot(profile.id) : container.rootDir;
   const vMap = new Map<string, string>();
   vMap.set("launcher_name", LAUNCHER_NAME);
   vMap.set("launcher_version", LAUNCHER_VERSION);
 
   const usingLibs: string[] = [];
-  const nativesLibs: string[] = [];
+  let nativesLibs: string[] = [];
   for (const l of profile.libraries) {
     if (!l.canApply()) {
       continue;
     }
     const tPath = makePath(l.name).trim();
     if (tPath !== "") {
-      const lb = container.getLibraryPath(tPath);
+      const lb = path.relative(root, container.getLibraryPath(tPath));
       if (!usingLibs.includes(lb)) {
         usingLibs.push(lb);
       }
     }
     if (l.isNative) {
-      const nlb = container.getNativeLibraryExtractedRoot(l);
+      const nlb = path.relative(root, container.getNativeLibraryExtractedRoot(l));
       if (!nativesLibs.includes(nlb)) {
         nativesLibs.push(nlb);
       }
@@ -79,7 +81,7 @@ export function generateVMArgs(
   }
   // Specialize for 'client.jar'
   usingLibs.push(
-    path.join(container.getVersionRoot(profile.id), profile.id + JAR_SUFFIX) // Always navigate to the same
+    path.relative(root, path.join(container.getVersionRoot(profile.id), profile.id + JAR_SUFFIX)) // Always navigate to the same
   );
   /*
   if (!isNull(profile.clientArtifacts)) {
@@ -89,6 +91,10 @@ export function generateVMArgs(
       })
     );
   }*/
+  // Because of legacy Linux lwjgl bug, we have to lauch minecraft like this.
+  if (process.platform == "linux") {
+    nativesLibs = nativesLibs.map(v => '/proc/self/cwd/' + v);
+  }
   // All natives directories put together
   vMap.set("natives_directory", nativesLibs.join(FILE_SEPARATOR));
   // 1.17
