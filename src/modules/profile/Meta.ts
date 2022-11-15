@@ -274,14 +274,19 @@ class Rule {
       }
     }
     if (this.requireOSArch !== "") {
-      if (os.arch() !== this.requireOSArch) {
+      const archRegex = new RegExp(this.requireOSArch);
+      try {
+        if (!archRegex.test(os.machine())) {
+          return false;
+        }
+      } catch {
         return false;
       }
     }
     if (this.requireOSVersion !== "") {
       try {
         const versionRegex = new RegExp(this.requireOSVersion);
-        if (!versionRegex.test(os.version())) {
+        if (!versionRegex.test(os.release())) {
           return false;
         }
       } catch {
@@ -356,27 +361,27 @@ export class ClassifiersMeta {
       obj["javadoc"] === undefined || obj["javadoc"] === null
         ? ArtifactMeta.emptyArtifactMeta()
         : // @ts-ignore
-          ArtifactMeta.fromObject(obj["javadoc"]);
+        ArtifactMeta.fromObject(obj["javadoc"]);
     const nL =
       obj["natives-linux"] === undefined || obj["natives-linux"] === null
         ? ArtifactMeta.emptyArtifactMeta()
         : // @ts-ignore
-          ArtifactMeta.fromObject(obj["natives-linux"]);
+        ArtifactMeta.fromObject(obj["natives-linux"]);
     const nM =
       obj["natives-macos"] === undefined || obj["natives-macos"] === null
         ? ArtifactMeta.emptyArtifactMeta()
         : // @ts-ignore
-          ArtifactMeta.fromObject(obj["natives-macos"]);
+        ArtifactMeta.fromObject(obj["natives-macos"]);
     const nW =
       obj["natives-windows"] === undefined || obj["natives-windows"] === null
         ? ArtifactMeta.emptyArtifactMeta()
         : // @ts-ignore
-          ArtifactMeta.fromObject(obj["natives-windows"]);
+        ArtifactMeta.fromObject(obj["natives-windows"]);
     const sources =
       obj["sources"] === undefined || obj["sources"] === null
         ? ArtifactMeta.emptyArtifactMeta()
         : // @ts-ignore
-          ArtifactMeta.fromObject(obj["sources"]);
+        ArtifactMeta.fromObject(obj["sources"]);
 
     return new ClassifiersMeta(javadoc, nL, nM, nW, sources);
   }
